@@ -8,6 +8,11 @@ The Python Libraries used in this repository are:
   - Scikit-learn  
   - FBProphet   
   
+The Jupyter Notebooks folder contains:  
+  - Python Notebooks
+  - R Notebooks  
+  - Data Sheets used (mainly csv)  
+  
 For any concerns/queries please contact me at:  
 rohan.b.singh54@gmail.com  
 rxs1182@case.edu  
