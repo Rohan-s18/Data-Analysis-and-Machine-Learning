@@ -17,7 +17,7 @@ The Python Libraries used in this repository are:
   
 
   
-For any concerns, queries or if just want a socially-awkward interaction with me, please contact me at:  
+For any concerns, suggestions, queries or something else, please contact me at:  
 rohan.b.singh54@gmail.com  
 rxs1182@case.edu  
   
