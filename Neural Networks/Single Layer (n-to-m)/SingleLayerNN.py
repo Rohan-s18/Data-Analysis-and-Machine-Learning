@@ -14,10 +14,12 @@ This cell contains the source code for the SingleLayer Neural Network Class
 class NeuralNetwork:
 
     #The constructor for the Neural Network class
-    def __init__(self, dataset, targets, n):
+    def __init__(self, dataset, targets, n, m):
         self.trainset = dataset
         self.targetset = targets
         self.n = n
+        self.m = m
+        self.init_w = np.zeros([m,n+1])
         pass
 
     
@@ -36,7 +38,7 @@ class NeuralNetwork:
             a = np.concatenate((a,self.trainset[i]),axis=0)
 
             #Appending the output for the point (inner-product) into the output list
-            output.append(np.dot(a,weights))
+            output.append(np.matmul(weights,a))
 
         #Converting the output into a numpy array
         return np.array(output)
@@ -59,7 +61,11 @@ class NeuralNetwork:
         #Dividing the sum by 2
         tse /=2 
 
-        return tse
+        sum = 0
+        for i in range(0,len(tse),1):
+            sum += tse[i]
+
+        return sum
 
     #This function will calculate the summed gradient that will be used in the learning rule
     def get_summed_gradient(self,weights):
@@ -102,15 +108,30 @@ class NeuralNetwork:
             gradient.append(grad_sum)
 
         
+        gradient = np.array(gradient)
+        return np.transpose(gradient)
 
-        return np.array(gradient)
+    #This function will be used to create a matrix of initial weights
+    def initial_weights(self):
+        
+        #The list of rows represents the matrix
+        rows = []
+        for i in range(0,self.m,1):
 
+            #This represents an individual row
+            row = []
+            for j in range(0,self.n+1,1):
+                row.append(0.0)
+
+            rows.append(row)
+
+        return np.array(rows)
 
     #This will be used to train the Neural Network using gradient descent, using the input step-size and stopping point and a maximum iteration count
     def train(self, epsilon, maxerr, maxiter):
         
-        #Setting the intial weights to 0 for all of the n-parameters (and the bias)
-        w = np.zeros(self.n + 1)
+        #Setting the intial weights to 0 for all of the n-parameters (and the bias), this makes the initial matrix an MxN matrix
+        w = self.initial_weights()
 
         #Iterating within the maximum iteration limit
         for i in range (0,maxiter,1):
@@ -130,7 +151,8 @@ class NeuralNetwork:
             summed_grad = self.get_summed_gradient(w)
             
             #Updating the weights for the next iteration
-            w -= (epsilon*summed_grad)
+            summed_grad *= epsilon
+            w -= summed_grad
 
         self.trained_weight = w
         #Returning the optimal weights 
@@ -150,7 +172,7 @@ class NeuralNetwork:
             a = np.concatenate((a,test_set[i]),axis=0)
 
             #Appending the output for the point (inner-product with the optimum weights) into the output list
-            output.append(np.dot(a,self.trained_weight))
+            output.append(np.matmul(self.trained_weight,a))
 
         #Converting the output into a numpy array
         return np.array(output)
@@ -178,27 +200,24 @@ def get_data():
     pet_wid = df["petal_width"].to_numpy()
     sep_len = df["sepal_length"].to_numpy()
     sep_wid = df["sepal_width"].to_numpy()
-    spec = df["species"]
 
     for i in range(0,len(pet_len),1):
 
         #For a row of datapoints
-        temp = []
-        temp.append(pet_len[i])
-        temp.append(pet_wid[i])
-        temp.append(sep_len[i])
-        temp.append(sep_wid[i])
+        data_row = []
+        data_row.append(pet_len[i])
+        data_row.append(pet_wid[i])
 
-        #Converting Species string to float
-        if(spec[i] == "setosa"):
-            target.append(100.0)
-        elif(spec[i] == "virginica"):
-            target.append(200.0)
-        else:
-            target.append(300.0)
+        #For a row of the targets
+        target_row = []
+        target_row.append(sep_len[i])
+        target_row.append(sep_wid[i])
 
         #Adding the row to the dataset
-        dataset.append(temp)
+        dataset.append(data_row)
+
+        #Adding  the row to the target
+        target.append(target_row)
 
 
     return np.array(dataset), np.array(target)
@@ -215,9 +234,12 @@ def main():
     dataset, target = get_data()
 
     #Instantiating the Neural Network Object
-    DemoNN = NeuralNetwork(dataset=dataset,targets=target,n=4)
-    #out = DemoNN.get_NN_Output(np.array([1,1,1,1,1]))
-    DemoNN.train(0.001,500,10000)
+    DemoNN = NeuralNetwork(dataset=dataset,targets=target,n=2,m=2)
+
+    #Training the model
+    out = DemoNN.train(0.0001,5,10000)
+
+    #Using the predict function of the model
     out = DemoNN.predict(dataset)
     print(out)
 
