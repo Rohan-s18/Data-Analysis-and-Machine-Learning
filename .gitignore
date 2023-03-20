@@ -1,0 +1,13 @@
+.vscode
+
+vscode
+
+__pycache__
+
+.DS_Store
+
+a.out
+
+venv
+
+.venv
