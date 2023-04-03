@@ -1,6 +1,6 @@
 """
 Author: Rohan Singh
-Python Module to find the intersectio between different drugs across different datasets
+Python Module to find the intersectio between drugs across transcriptionsal response profile and dd disease datasets
 """
 
 #  Imports
@@ -10,8 +10,8 @@ from pubchempy import *
 import random
 
 
-#  Getting the attributes for ic50
-def get_ic(filepath, attr):
+#  Getting the attributes for trp
+def get_trp(filepath, attr):
     df = pd.read_csv(filepath)
     temp = df[attr].to_numpy()
     return temp
@@ -36,20 +36,20 @@ def get_intersection_drugs(db1, db2):
 #  Main Function
 def main():
 
-    filepath_ic50 = "/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/IC50.csv"
+    filepath_trp = "/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/IC50.csv"
     filepath_ddd = "/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/intersection_pairs_dd_disease.csv"
 
-    ic = get_ic(filepath_ic50,"CELL_NAME")
+    trp = get_trp(filepath_trp,"CELL_NAME")
     ddd = get_ddd(filepath_ddd,"cell_line")
 
-    intersection = get_intersection_drugs(ic,ddd)
+    intersection = get_intersection_drugs(trp,ddd)
 
     print("The Intersection is:")
     print(intersection)
 
     print("\n\n")
 
-    print(ic)
+    print(trp)
     print("\n\n")
     print(ddd)
 
