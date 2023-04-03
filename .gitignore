@@ -11,3 +11,6 @@ a.out
 venv
 
 .venv
+
+*.csv
+*.tsv
