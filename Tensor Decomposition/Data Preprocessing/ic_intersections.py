@@ -30,7 +30,7 @@ def get_intersection_drugs(db1, db2):
     db2_set = set(db2)
     intersections = db1_set.intersection(db2_set)
     print(len(intersections))
-    return np.array(intersections)
+    return np.array(intersections), intersections
 
 
 #  Function to get the intersection dataframe for ddd
@@ -40,11 +40,24 @@ def intersect_ddd(intersection, filepath):
 
 #  Function to get the intersection dataframe for ic50
 def intersect_ic50(intersection, filepath):
-    pass
+    df = pd.read_csv(filepath)
+    
+    names = df["CELL_NAME"].to_numpy()
+    avg = df["AVERAGE"].to_numpy()
+
+    avgs = []
+
+    for i in range(0,len(names),1):
+        if names[i] in intersection:
+            avgs.append(avg[i])
+    
+    return np.array(avgs)
+
 
 
 #  Function to write it back to the csv
-def flush_csv(df, filepath):
+def flush_csv(arr, filepath, cols):
+    df = pd.DataFrame(arr, columns=cols)
     df.to_csv(filepath)
 
 
@@ -57,7 +70,7 @@ def main():
     ic = get_ic(filepath_ic50,"CELL_NAME")
     ddd = get_ddd(filepath_ddd,"cell_line")
 
-    intersection_set = get_intersection_drugs(ic,ddd)
+    intersection_arr, intersection_set = get_intersection_drugs(ic,ddd)
 
     print("The Intersection is:")
     print(intersection_set)
@@ -68,12 +81,12 @@ def main():
     print("\n\n")
     print(ddd)
 
-    ddd_intersect = intersect_ddd(intersection_set, filepath_ddd)
+    #ddd_intersect = intersect_ddd(intersection_set, filepath_ddd)
 
     ic50_intersect = intersect_ic50(intersection_set, filepath_ic50)
 
 
-    print(ddd_intersect)
+    #print(ddd_intersect)
     print("\n")
 
     print(ic50_intersect)
@@ -82,8 +95,9 @@ def main():
     ddd_int_filepath = "/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/intersections/ddd.csv"
     ic50_int_filepath = "/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/intersections/ic50.csv"
 
-    flush_csv(ddd_intersect, ddd_int_filepath)
-    flush_csv(ic50_intersect, ic50_int_filepath)
+    #flush_csv(ddd_intersect, ddd_int_filepath)
+    #flush_csv(ic50_intersect, ic50_int_filepath, cols=["ic50"])
+
 
 
 
