@@ -12,7 +12,8 @@ from scipy.sparse import linalg
 
 learning_rate = 0.000001
 
-num_side_info = 2
+#Transcriptional Response Profile Side information number is 5
+num_side_info = 5
 alpha_a = []
 for i in range(num_side_info):
     alpha_a.append(1.0)
