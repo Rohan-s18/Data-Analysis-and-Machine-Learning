@@ -3,14 +3,14 @@ import pandas
 import math
 
 import pubchempy
-from tdc.multi_pred import DDI
+#from tdc.multi_pred import DDI
 import pandas as pd
 import pickle
 import pubchempy as pcp
-from rdkit import Chem
-from rdkit.Chem import AllChem
-from rdkit import DataStructs
-from tdc.multi_pred import DTI
+#from rdkit import Chem
+#from rdkit.Chem import AllChem
+#from rdkit import DataStructs
+#from tdc.multi_pred import DTI
 import re
 
 
