@@ -15,8 +15,8 @@ import re
 
 
 def build_x_tensor():
-    dd_disease_data = pd.read_csv('./useful_data/intersection_pairs_dd_disease.csv')
-    drug_data = pd.read_csv('./useful_data/intersections.csv')
+    dd_disease_data = pd.read_csv('/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/intersection_pairs_dd_disease.csv')
+    drug_data = pd.read_csv('/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/intersections.csv')
     all_cell_line_ls = dd_disease_data['cell_line'].tolist()
     cell_line_ls = remove_duplicate(all_cell_line_ls)
 
@@ -647,11 +647,11 @@ if __name__ == '__main__':
     # find_intersection()
     # find_intersection_ddi()
     # find_intersection_dd_disease()
-    # build_x_tensor()
-    # build_y_tensor()
+    build_x_tensor()
+    build_y_tensor()
     # generate_side_info_tanimoto()
     # generate_side_info_sider_distance_prep()
     # generate_side_info_side_effect()
-    generate_side_info_target_sequence_prep()
+    #generate_side_info_target_sequence_prep()
 
 
