@@ -16,7 +16,7 @@ import re
 
 def build_x_tensor():
     dd_disease_data = pd.read_csv('/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/intersection_pairs_dd_disease.csv')
-    drug_data = pd.read_csv('/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/intersections.csv')
+    drug_data = pd.read_csv('/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/intersections/intersections_ic50.csv')
     all_cell_line_ls = dd_disease_data['cell_line'].tolist()
     cell_line_ls = remove_duplicate(all_cell_line_ls)
 
@@ -28,7 +28,7 @@ def build_x_tensor():
     for index, cell_line in enumerate(cell_line_ls):
         result[str(index) + ' ' + cell_line] = build_slice_x('cell_line', cell_line, dd_disease_data, drug_data)
 
-    with open('./useful_data/tensor_x.pickle', 'wb') as handle:
+    with open('/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/Pickles/tensor_x.pickle', 'wb') as handle:
         pickle.dump(result, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     print('total number of drugs: {}'.format(drug_num))
@@ -53,8 +53,8 @@ def build_slice_x(slice_col_name, slice_name, tensor_data, drug_data):
 
 
 def build_y_tensor():
-    ddi_data = pd.read_csv('./useful_data/intersection_pairs_ddi.csv')
-    drug_data = pd.read_csv('./useful_data/intersections.csv')
+    ddi_data = pd.read_csv('/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/intersection_pairs_ddi.csv')
+    drug_data = pd.read_csv('/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/intersections/intersections_ic50.csv')
     all_ddi_type_ls = ddi_data['Y'].tolist()
     ddi_type_ls = remove_duplicate(all_ddi_type_ls)
 
@@ -66,7 +66,7 @@ def build_y_tensor():
     for index, ddi_type in enumerate(ddi_type_ls):
         result[str(index) + ' ' + str(ddi_type)] = build_slice_y('Y', ddi_type, ddi_data, drug_data)
 
-    with open('./useful_data/tensor_y.pickle', 'wb') as handle:
+    with open('/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Tensor Decomposition/Datasets/Pickles/tensor_y.pickle', 'wb') as handle:
         pickle.dump(result, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     print('total number of drugs: {}'.format(drug_num))
