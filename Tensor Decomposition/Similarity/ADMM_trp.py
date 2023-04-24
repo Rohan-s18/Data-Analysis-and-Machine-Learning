@@ -76,7 +76,8 @@ def admm(rank, rho=0.5, eta=0.5, init_lower_bound=0.0, init_upper_bound=1.0, lea
         print('U finished!')
         U[U < 0] = 0
 
-        gradient_D = learning_rate * update_D(X1, Y1, U, W, V, F, num_drugs, num_disease, num_ddi, rank, rho)
+        #changed F to Y
+        gradient_D = learning_rate * update_D(X1, Y1, U, W, V, Y, num_drugs, num_disease, num_ddi, rank, rho)
         D += gradient_D
         print('D finished!')
         D[D < 0] = 0
