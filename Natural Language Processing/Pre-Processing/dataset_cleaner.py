@@ -8,15 +8,26 @@ Date: 28 May 2023
 #  Imports
 from text_cleaner import remove_html
 import pandas as pd
+import os
 
 
 #  Helper function to obtain the messy text from the dataset
-def get_messy(filepath, title):
-    df = pd.read_csv(filepath)
+def get_messy(html_directory):
+    html_list = []
 
-    return df[title].to_list()
+    # Iterate over HTML files in the directory
+    for filename in os.listdir(html_directory):
+        if filename.endswith(".html"):
+            file_path = os.path.join(html_directory, filename)
+
+            with open(file_path, "r") as file:
+                html_content = file.read()
+                html_list.append(html_content)
+
+    print(len(html_list))
+    return html_list
+
     
-
 
 #  Helper function to clean all of the data
 def clean_all(data):
@@ -41,16 +52,16 @@ def make_dataset(messy, clean, write, output_filepath):
 #  Main function to test functionality
 def main():
     
-    input_filepath = ""
-    output_filepath = ""
+    input_filepath = "/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Natural Language Processing/Pre-Processing/html_dataset"
+    output_filepath = "/Users/rohansingh/github_repos/Data-Analysis-and-Machine-Learning/Natural Language Processing/Pre-Processing/temp_out.csv"
 
-    messy = get_messy(input_filepath,"")
+    messy = get_messy(input_filepath)
 
     clean = clean_all(messy)
 
     make_dataset(messy, clean, True, output_filepath)
 
-    
+
 
     
     
