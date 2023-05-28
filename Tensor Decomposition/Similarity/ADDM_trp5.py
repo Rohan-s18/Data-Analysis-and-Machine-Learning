@@ -13,7 +13,7 @@ from scipy.sparse import linalg
 learning_rate = 0.000001
 
 #Transcriptional Response Profile Side information number is 5
-num_side_info = 0
+num_side_info = 2
 alpha_a = []
 for i in range(num_side_info):
     alpha_a.append(1.0)
@@ -137,10 +137,9 @@ def update_D(X1, Y1, U, W, V, F, num_drugs, num_disease, num_ddi, rank, rho):
 
     result_temp1 = (C3.transpose() * C3).multiply(2) + (C4.transpose() * C4).multiply(2)
     result_temp1.data += rho
-    f = np.ndarray(F)
     result_temp2 = (C3.transpose() * b1.transpose()).multiply(2) \
                    + (C4.transpose() * b2.transpose()).multiply(2) \
-                   + csr_matrix(f.reshape(-1)).transpose() \
+                   + csr_matrix(F.reshape(-1)).transpose() \
                    + csr_matrix(rho * U.reshape(-1)).transpose()
     result = (linalg.inv(result_temp1) * result_temp2).toarray()
     return np.transpose(result).reshape((num_drugs, rank))
