@@ -5,6 +5,8 @@ import warnings
 from typing import Optional, List
 
 import numpy as np
+import sting
+
 from sting.classifier import Classifier
 from sting.data import Feature, parse_c45
 
