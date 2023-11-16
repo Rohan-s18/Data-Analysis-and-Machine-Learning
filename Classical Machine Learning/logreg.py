@@ -8,8 +8,12 @@ import argparse
 import os.path
 import warnings
 
+import warnings
+
+#suppress warnings
+warnings.filterwarnings('ignore')
+
 from typing import Optional, List
-from tabulate import tabulate
 
 import numpy as np
 from sting.classifier import Classifier
@@ -192,7 +196,7 @@ def logreg(data_path: str, lambda_: float, use_cross_validation: bool = True):
 
     for X_train, y_train, X_test, y_test in datasets:
 
-        regressor = LogisticRegression(lambda_=lambda_)
+        regressor = LogisticRegression(schema=schema,lambda_=lambda_)
         regressor.fit(X_train, y_train)
 
         # If we are using cross validation, print the run number before each
