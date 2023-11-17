@@ -22,7 +22,7 @@ from sting.data import Feature, parse_c45
 import util
 
 # Class for Logistic regression classifier
-class LogisticRegression:
+class LogisticRegression(Classifier):
 
     # Intial Attributes
     def __init__(self, schema: List[Feature], lambda_):
@@ -184,7 +184,9 @@ def logreg(data_path: str, lambda_: float, use_cross_validation: bool = True):
     accuracy_list = []
     precision_list = []
     recall_list = []
-    roc_auc_list = []
+    #roc_auc_list = []
+    all_y_test = []
+    confidence_values = []
 
     i = 1
 
@@ -199,11 +201,6 @@ def logreg(data_path: str, lambda_: float, use_cross_validation: bool = True):
         regressor = LogisticRegression(schema=schema,lambda_=lambda_)
         regressor.fit(X_train, y_train)
 
-        # If we are using cross validation, print the run number before each
-        if use_cross_validation:
-            print("Run ", i)
-            i += 1
-
         y_hat = regressor.predict(X=X_test)
         y_scores = regressor.y_scores(X=X_test)
 
@@ -211,24 +208,28 @@ def logreg(data_path: str, lambda_: float, use_cross_validation: bool = True):
         accuracy_list.append(util.accuracy(y=y_test, y_hat=y_hat))
         precision_list.append(util.precision(y=y_test, y_hat=y_hat))
         recall_list.append(util.recall(y=y_test,y_hat=y_hat))
-        roc_auc_list.append(util.auc(y=y_test,p_y_hat=y_scores))
+
+        all_y_test.extend(y_test)
+        confidence_values.extend(y_scores)
 
     # Calculating the averages and standard deviations
     accuracy_avg = np.mean(accuracy_list)
     precision_avg = np.mean(precision_list)
     recall_avg = np.mean(recall_list)
-    roc_auc_avg = np.mean(roc_auc_list)
 
     accuracy_std = np.std(accuracy_list)
     precision_std = np.std(precision_list)
     recall_std = np.std(recall_list)
-    roc_auc_std = np.std(roc_auc_list)
+
+    auc = util.auc(np.array(all_y_test), np.array(confidence_values))
 
     # Printing the metrics
     print(f"Accuracy: {accuracy_avg:.3f} {accuracy_std:.3f}")
     print(f"Precision: {precision_avg:.3f} {precision_std:.3f}")
     print(f"Recall: {recall_avg:.3f} {recall_std:.3f}")
-    print(f"Area under ROC: {roc_auc_avg:.3f} {roc_auc_std:.3f}")   
+    print(f"Area Under ROC: {auc:.3f}")
+
+    return [accuracy_avg, accuracy_std, precision_avg, precision_std, recall_avg, recall_std, auc] 
 
 
 

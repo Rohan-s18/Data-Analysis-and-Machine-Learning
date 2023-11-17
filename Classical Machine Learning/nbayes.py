@@ -5,8 +5,6 @@ import warnings
 from typing import Optional, List
 
 import numpy as np
-import sting
-
 from sting.classifier import Classifier
 from sting.data import Feature, parse_c45
 
@@ -19,10 +17,8 @@ class NaiveBayes(Classifier):
         self._schema = schema
         self.num_bins = num_bins
         self.m_estimate = m_estimate
-        self.positive_prior = 0
-        self.negative_prior = 0
-        self.positive_probs = {}
-        self.negative_probs = {}
+        self.priors = []
+        self.conditional_probs = {}
 
 
     @property
@@ -32,10 +28,27 @@ class NaiveBayes(Classifier):
         """
         return self._schema
 
-    # def calculate_mle_params(self):
-    #     if m_estimate < 0:
-    #
 
+    def calculate_estimate_params(self, v):
+        """
+        Calculates the parameters for m-estimates.
+
+            Args:
+                v: The number of unique feature values for a specific feature.
+            Returns:
+                m (int): The m-estimate parameter.
+                p (int): The p parameter.
+        """
+        if self.m_estimate < 0:
+            # Use Laplace Smoothing
+            m= v
+            p = 1/v
+
+        else:
+            m = self.m_estimate
+            p = v
+
+        return m, p
 
     def fit(self, X: np.ndarray, y: np.ndarray, weights: Optional[np.ndarray] = None) -> None:
         """
@@ -47,13 +60,10 @@ class NaiveBayes(Classifier):
             weights: Weights for each example.
         """
 
-        # Discretize continuous features
-        X_discretized = self.discretize_continuous_features(X)
-
         # Calculate prior probabilities for each class
         self.calculate_priors(y)
         # Calculate the conditional probabilities
-        self.calculate_conditional_probabilities(X, y)
+        self.conditional_probs = self.calculate_conditional_probabilities(X, y)
 
     def calculate_priors(self, y: np.ndarray)->None:
         """
@@ -66,11 +76,11 @@ class NaiveBayes(Classifier):
         # Calculate prior probabilities for each class
         [num_neg, num_pos] = util.count_label_occurrences(y)
 
-        self.positive_prior = num_pos / len(y)
-        self.negative_prior = num_neg / len(y)
+        pos_prior = num_pos / len(y)
+        neg_prior = num_neg / len(y)
+        self.priors = [neg_prior, pos_prior]
 
-
-    def calculate_conditional_probabilities(self, X: np.ndarray, y: np.ndarray) -> None:
+    def calculate_conditional_probabilities(self, X: np.ndarray, y: np.ndarray) -> dict:
         """
         Calculates the conditional probabilities for each class.
 
@@ -78,30 +88,45 @@ class NaiveBayes(Classifier):
             X: The testing data of shape (n_examples, n_features).
             y (np.ndarray): The labels. The shape is (n_examples,).
 
+        Returns:
+            A dictionary of conditional probabilities for each feature.
+
         """
+        conditional_probs = {}
+
+        # Loop through each feature
         for feature_idx in range(X.shape[1]):
-            # Store the examples which have positive labels
-            positive_feature_values = X[y == 1, feature_idx]
-            # Find the total number of examples in the positive class
-            total_pos = len(positive_feature_values)
-            # Finds the number of unique values
-            pos_counts = util.calculate_value_counts(positive_feature_values)
-            self.positive_probs[feature_idx] = {
-                value: (count + self.m_estimate) / (total_pos + self.m_estimate * len(pos_counts))
-                for value, count in pos_counts.items()
-            }
+            # Get every unique value of the feature
+            unique_feat_vals = np.unique(X[:, feature_idx])
 
-            # Store negative label feature values
-            negative_feature_values = X[y == 0, feature_idx]
-            # Find the total number of examples in the positive class
-            total_neg = len(negative_feature_values)
-            # # Finds the number of unique values
-            neg_counts = util.calculate_value_counts(negative_feature_values)
-            self.negative_probs[feature_idx] = {
-                value: (count + self.m_estimate) / (total_neg + self.m_estimate * len(neg_counts))
-                for value, count in neg_counts.items()
-            }
+            # Get parameters for m-estimates
+            m, p = self.calculate_estimate_params(len(unique_feat_vals))
 
+            # Dictionary to store all conditional probabilities for that feature
+            conditional_probs[feature_idx] = {}
+
+            # Loop through each class in y
+            for class_label in np.unique(y):
+                # Examples from X where y = the class label
+                X_class = X[y == class_label]
+
+                unique_feature_vals_class, num_vals = np.unique(X_class[:, feature_idx], return_counts=True)
+                num_feature_vals = len(unique_feature_vals_class)
+
+                # Dictionary to store each unique feature value and its count
+                feature_vals_counts = {value: count for value, count in zip(unique_feature_vals_class, num_vals)}
+
+                # Find the total number of examples that have that class label
+                total_examples = len(X_class)
+
+                # Calculate the conditional probability for each unique feature value
+                for value in unique_feat_vals:
+                    count_val = feature_vals_counts.get(value, 0)
+                    conditional_prob = (count_val + (m * p))/(total_examples + m)
+
+                    conditional_probs[feature_idx][(value, class_label)] = conditional_prob
+
+        return conditional_probs
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -114,24 +139,40 @@ class NaiveBayes(Classifier):
         """
 
         predictions = []
-        for instance in X:
-            pos_prob = self.positive_prior
-            neg_prob = self.negative_prior
-            for feature_idx, value in enumerate(instance):
-                # Calculate the conditional probability for positive and negative classes
-                if feature_idx in self.positive_probs:
-                    pos_prob *= self.positive_probs[feature_idx].get(value, 1 / (
-                                len(self.positive_probs[feature_idx]) + self.m_estimate))
-                if feature_idx in self.negative_probs:
-                    neg_prob *= self.negative_probs[feature_idx].get(value, 1 / (
-                                len(self.negative_probs[feature_idx]) + self.m_estimate))
+        confidence_values= []
+        # Loop through examples in X
+        for x in X:
+            max_prob = float('-inf')
+            predicted_class = None
+            class_probs = []
 
-            # Choose the class with the highest probability
-            if pos_prob >= neg_prob:
-                predictions.append(1)
-            else:
-                predictions.append(0)
-        return np.array(predictions)
+            # Loop through each class label
+            for class_label in [0,1]:
+                class_prob = self.priors[class_label]  # Class prior for the current sample
+
+                # Calculate the product of conditional probabilities for each feature of that example
+                for feature_idx, value in enumerate(x):
+                    # Get conditional probability for the current feature value given the class
+                    conditional_prob = self.conditional_probs.get(feature_idx, {}).get((value, class_label), 0)
+
+                    # Multiply conditional probabilities
+                    class_prob *= conditional_prob
+
+                class_probs.append(class_prob)
+
+                # Update predicted class if the current class probability is higher
+                if class_prob > max_prob:
+                    max_prob = class_prob
+                    predicted_class = class_label
+
+            # Append the predicted class to the list of predictions
+            predictions.append(predicted_class)
+
+            # Compute confidence intervals as the ratio between class probabilities
+            confidence = class_probs[1] / sum(class_probs)
+            confidence_values.append(confidence)
+
+        return np.array(predictions), confidence_values
 
     def discretize_continuous_features(self, X: np.ndarray) -> np.ndarray:
         """
@@ -152,7 +193,7 @@ class NaiveBayes(Classifier):
         for feature_idx in range(X.shape[1]):
             feature_values = X[:, feature_idx]
 
-            if np.issubdtype(X[:, feature_idx].dtype, np.integer):
+            if np.issubdtype(X[:, feature_idx].dtype, np.integer) or X[:, feature_idx].dtype == object:
                 # If the feature is already discrete, leave as is
                 X_discretized[:, feature_idx] = feature_values
             else:
@@ -182,20 +223,19 @@ def evaluate_and_print_metrics(nbayes: NaiveBayes, X: np.ndarray, y: np.ndarray)
 
     """
     # Calculate predicted labels
-    y_hat = nbayes.predict(X)
+    y_hat, p_y_hat = nbayes.predict(X)
 
     # Calculate accuracy
     acc = util.accuracy(y, y_hat)
     prec = util.precision(y, y_hat)
     rec = util.recall(y, y_hat)
 
-    return acc, prec, rec
+    return acc, prec, rec, p_y_hat
 
 
 
 def nbayes(data_path: str, num_bins: int, m_estimate: int, use_cross_validation: bool = True):
     """
-
     :param data_path: The path to the data.
     :param num_bins:
     :param use_cross_validation: If True, use cross validation. Otherwise, run on the full dataset.
@@ -212,6 +252,8 @@ def nbayes(data_path: str, num_bins: int, m_estimate: int, use_cross_validation:
     accuracies = []
     precisions = []
     recalls = []
+    all_y_test = []
+    confidence_values = []
 
     if use_cross_validation:
         # Split datasets into 5 folds using cross validation
@@ -221,11 +263,23 @@ def nbayes(data_path: str, num_bins: int, m_estimate: int, use_cross_validation:
 
     for X_train, y_train, X_test, y_test in datasets:
         n_bayes = NaiveBayes(schema, num_bins, m_estimate)
-        n_bayes.fit(X_train, y_train)
-        acc, prec, rec = evaluate_and_print_metrics(n_bayes, X_test, y_test)
+
+        # Discretize continuous features
+        X_train_discretized = n_bayes.discretize_continuous_features(X_train)
+        X_test_discretized = n_bayes.discretize_continuous_features(X_test)
+
+        n_bayes.fit(X_train_discretized, y_train)
+
+        all_y_test.extend(y_test)
+
+        acc, prec, rec, confidence_vals = evaluate_and_print_metrics(n_bayes, X_test_discretized, y_test)
+        confidence_values.extend(confidence_vals)
+
         accuracies.append(acc)
         precisions.append(prec)
         recalls.append(rec)
+
+    auc = util.auc(np.array(all_y_test), np.array(confidence_values))
 
     avg_accuracy = np.mean(accuracies)
     std_deviation_acc = np.std(accuracies)
@@ -237,6 +291,9 @@ def nbayes(data_path: str, num_bins: int, m_estimate: int, use_cross_validation:
     print(f"Accuracy: {avg_accuracy:.3f} {std_deviation_acc:.3f}")
     print(f"Precision: {avg_precision:.3f} {std_deviation_prec:.3f}")
     print(f"Recall: {avg_recall:.3f} {std_deviation_rec:.3f}")
+    print(f"Area Under ROC: {auc:.3f}")
+
+    return [avg_accuracy, std_deviation_acc, avg_precision, std_deviation_prec, avg_recall, std_deviation_rec, auc]
 
 
 if __name__ == '__main__':
